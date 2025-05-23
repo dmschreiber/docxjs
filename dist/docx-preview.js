@@ -2228,6 +2228,7 @@
                     case "tc":
                         result.children.push(this.parseTableCell(c));
                         break;
+                    case "tblPrEx":
                     case "trPr":
                         this.parseTableRowProperties(c, result);
                         break;
@@ -2375,6 +2376,7 @@
                         break;
                     case "tblBorders":
                         this.parseBorderProperties(c, childStyle || style);
+                        console.log("tblBorders", childStyle || style);
                         break;
                     case "tblCellSpacing":
                         style["border-spacing"] = values.valueOfMargin(c);

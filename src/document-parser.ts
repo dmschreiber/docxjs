@@ -1080,9 +1080,11 @@ export class DocumentParser {
 					result.children.push(this.parseTableCell(c));
 					break;
 
+				case "tblPrEx":
 				case "trPr":
 					this.parseTableRowProperties(c, result);
 					break;
+
 			}
 		});
 
