@@ -760,6 +760,12 @@ export class DocumentParser {
                         }
                         break;
 
+					case "t":
+						result.children.push(<WmlText>{
+							type: DomType.Text,
+							text: c.textContent
+						})
+
                     case "br":
 						result.children.push(<WmlBreak>{
 							type: DomType.Break,

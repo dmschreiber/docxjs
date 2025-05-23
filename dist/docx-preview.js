@@ -1966,6 +1966,11 @@
                             });
                         }
                         break;
+                    case "t":
+                        result.children.push({
+                            type: DomType.Text,
+                            text: c.textContent
+                        });
                     case "br":
                         result.children.push({
                             type: DomType.Break,
