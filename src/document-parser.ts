@@ -639,10 +639,7 @@ export class DocumentParser {
 
 			switch (c.localName) {
 				case "t":
-					result.children.push(<WmlText>{
-						type: DomType.Text,
-						text: c.textContent
-					});//.replace(" ", "\u00A0"); // TODO
+					result.children.push(this.parseText(node, result));//.replace(" ", "\u00A0"); // TODO
 					break;
 
 				case "delText":
@@ -746,6 +743,33 @@ export class DocumentParser {
 
 		return result;
 	}
+
+	parseText(node, parent) {
+            var result: WmlRun = <WmlRun>{ type: DomType.Run, parent: parent, children: [] };
+
+		xmlUtil.foreach(node, c => {
+			c = this.checkAlternateContent(c);
+
+			switch (c.localName) {
+                    case undefined:
+                        if (c.nodeName == "#text") {
+                            result.children.push(<WmlText>{
+								type: DomType.Text,
+								text: c.textContent
+							});
+                        }
+                        break;
+
+                    case "br":
+						result.children.push(<WmlBreak>{
+							type: DomType.Break,
+							break: xml.attr(c, "type") || "textWrapping"
+						});
+						break;
+                }
+            });
+            return result;
+        }
 
 	parseMathElement(elem: Element): OpenXmlElement {
 		const propsTag = `${elem.localName}Pr`;
