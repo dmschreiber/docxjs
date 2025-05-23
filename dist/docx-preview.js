@@ -1974,6 +1974,9 @@
             if (node.childNodes.length == 0) {
                 result.text = node.textContent;
             }
+            else if (node.childNodes.length == 1) {
+                result.text = node.childNodes[0].textContent;
+            }
             return result;
         }
         parseMathElement(elem) {
