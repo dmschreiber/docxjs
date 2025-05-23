@@ -652,9 +652,9 @@ export class DocumentParser {
 						result.children.push(this.parseRun(c, result));
 					} else {
 						result.children.push(<WmlText>{
-                            type: DomType.Text,
-                            text: c.textContent
-                        });
+							type: DomType.Text,
+							text: c.textContent
+						});
 					}
 					break;
 
