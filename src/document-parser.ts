@@ -639,7 +639,8 @@ export class DocumentParser {
 
 			switch (c.localName) {
 				case "t":
-					result.children.push(this.parseText(node, result));//.replace(" ", "\u00A0"); // TODO
+					c.childNodes
+					result.children.push(this.parseText(c, result));
 					break;
 
 				case "delText":
@@ -744,38 +745,33 @@ export class DocumentParser {
 		return result;
 	}
 
-	parseText(node, parent) {
-            var result: WmlRun = <WmlRun>{ type: DomType.Run, parent: parent, children: [] };
+	parseText(node: Element, parent?: OpenXmlElement): WmlText {
+		var result: WmlText = <WmlText>{ type: DomType.Text, parent: parent, children: [] };
 
 		xmlUtil.foreach(node, c => {
 			c = this.checkAlternateContent(c);
 
 			switch (c.localName) {
-                    case undefined:
-                        if (c.nodeName == "#text") {
-                            result.children.push(<WmlText>{
-								type: DomType.Text,
-								text: c.textContent
-							});
-                        }
-                        break;
+				case "t":
+					c.childNodes
+					result.children.push(this.parseText(c, result));
+					break;
 
-					case "t":
-						result.children.push(<WmlText>{
-							type: DomType.Text,
-							text: c.textContent
-						})
+				case "br":
+					result.children.push(<WmlBreak>{
+						type: DomType.Break,
+						break: xml.attr(c, "type") || "textWrapping"
+					});
+					break;
+			}
+		});
 
-                    case "br":
-						result.children.push(<WmlBreak>{
-							type: DomType.Break,
-							break: xml.attr(c, "type") || "textWrapping"
-						});
-						break;
-                }
-            });
-            return result;
-        }
+		if (node.childNodes.length == 0) {
+			result.text = node.textContent;
+		}
+
+        return result;
+    }
 
 	parseMathElement(elem: Element): OpenXmlElement {
 		const propsTag = `${elem.localName}Pr`;
