@@ -634,32 +634,47 @@ export class DocumentParser {
 	parseRun(node: Element, parent?: OpenXmlElement): WmlRun {
 		var result: WmlRun = <WmlRun>{ type: DomType.Run, parent: parent, children: [] };
 
-		xmlUtil.foreach(node, c => {
-			c = this.checkAlternateContent(c);
+		node.childNodes.forEach((c : ChildNode, i) => {
+			if (c.nodeType == Node.TEXT_NODE) {
+				result.children.push(<WmlText>{
+					type: DomType.Text,
+					text: c.textContent
+				});
+				return result;
+			}
 
-			switch (c.localName) {
+			let element = <Element>c;
+			element = this.checkAlternateContent(element);
+
+			switch (element.localName) {
 				case "t":
-					c.childNodes
-					result.children.push(this.parseText(c, result));
+					if (element.childNodes.length > 0) {
+						result.children.push(this.parseRun(element, result));
+					} else {
+						result.children.push(<WmlText>{
+                            type: DomType.Text,
+                            text: element.textContent
+                        });
+					}
 					break;
 
 				case "delText":
 					result.children.push(<WmlText>{
 						type: DomType.DeletedText,
-						text: c.textContent
+						text: element.textContent
 					});
 					break;
 
 				case "commentReference":
-					result.children.push(new WmlCommentReference(xml.attr(c, "id")));
+					result.children.push(new WmlCommentReference(xml.attr(element, "id")));
 					break;
 
 				case "fldSimple":
 					result.children.push(<WmlFieldSimple>{
 						type: DomType.SimpleField,
-						instruction: xml.attr(c, "instr"),
-						lock: xml.boolAttr(c, "lock", false),
-						dirty: xml.boolAttr(c, "dirty", false)
+						instruction: xml.attr(element, "instr"),
+						lock: xml.boolAttr(element, "lock", false),
+						dirty: xml.boolAttr(element, "dirty", false)
 					});
 					break;
 
@@ -667,7 +682,7 @@ export class DocumentParser {
 					result.fieldRun = true;
 					result.children.push(<WmlInstructionText>{
 						type: DomType.Instruction,
-						text: c.textContent
+						text: element.textContent
 					});
 					break;
 
@@ -675,9 +690,9 @@ export class DocumentParser {
 					result.fieldRun = true;
 					result.children.push(<WmlFieldChar>{
 						type: DomType.ComplexField,
-						charType: xml.attr(c, "fldCharType"),
-						lock: xml.boolAttr(c, "lock", false),
-						dirty: xml.boolAttr(c, "dirty", false)
+						charType: xml.attr(element, "fldCharType"),
+						lock: xml.boolAttr(element, "lock", false),
+						dirty: xml.boolAttr(element, "dirty", false)
 					});
 					break;
 
@@ -688,7 +703,7 @@ export class DocumentParser {
 				case "br":
 					result.children.push(<WmlBreak>{
 						type: DomType.Break,
-						break: xml.attr(c, "type") || "textWrapping"
+						break: xml.attr(element, "type") || "textWrapping"
 					});
 					break;
 
@@ -702,8 +717,8 @@ export class DocumentParser {
 				case "sym":
 					result.children.push(<WmlSymbol>{
 						type: DomType.Symbol,
-						font: encloseFontFamily(xml.attr(c, "font")),
-						char: xml.attr(c, "char")
+						font: encloseFontFamily(xml.attr(element, "font")),
+						char: xml.attr(element, "char")
 					});
 					break;
 
@@ -714,66 +729,36 @@ export class DocumentParser {
 				case "footnoteReference":
 					result.children.push(<WmlNoteReference>{
 						type: DomType.FootnoteReference,
-						id: xml.attr(c, "id")
+						id: xml.attr(element, "id")
 					});
 					break;
 
 				case "endnoteReference":
 					result.children.push(<WmlNoteReference>{
 						type: DomType.EndnoteReference,
-						id: xml.attr(c, "id")
+						id: xml.attr(element, "id")
 					});
 					break;
 
 				case "drawing":
-					let d = this.parseDrawing(c);
+					let d = this.parseDrawing(element);
 
 					if (d)
 						result.children = [d];
 					break;
 
 				case "pict":
-					result.children.push(this.parseVmlPicture(c));
+					result.children.push(this.parseVmlPicture(element));
 					break;
 
 				case "rPr":
-					this.parseRunProperties(c, result);
+					this.parseRunProperties(element, result);
 					break;
 			}
 		});
 
 		return result;
 	}
-
-	parseText(node: Element, parent?: OpenXmlElement): WmlText {
-		var result: WmlText = <WmlText>{ type: DomType.Text, parent: parent, children: [] };
-
-		xmlUtil.foreach(node, c => {
-			c = this.checkAlternateContent(c);
-
-			switch (c.localName) {
-				case "t":
-					c.childNodes
-					result.children.push(this.parseText(c, result));
-					break;
-
-				case "br":
-					result.children.push(<WmlBreak>{
-						type: DomType.Break,
-						break: xml.attr(c, "type") || "textWrapping"
-					});
-					break;
-			}
-		});
-
-		if (node.childNodes.length == 0) {
-			result.text = node.textContent;
-		} else if (node.childNodes.length == 1) {
-			result.text = node.childNodes[0].textContent;
-		}
-
-        return result;
-    }
 
 	parseMathElement(elem: Element): OpenXmlElement {
 		const propsTag = `${elem.localName}Pr`;

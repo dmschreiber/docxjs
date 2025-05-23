@@ -1858,44 +1858,59 @@ class DocumentParser {
     }
     parseRun(node, parent) {
         var result = { type: DomType.Run, parent: parent, children: [] };
-        xmlUtil.foreach(node, c => {
-            c = this.checkAlternateContent(c);
-            switch (c.localName) {
+        node.childNodes.forEach((c, i) => {
+            if (c.nodeType == Node.TEXT_NODE) {
+                result.children.push({
+                    type: DomType.Text,
+                    text: c.textContent
+                });
+                return result;
+            }
+            let element = c;
+            element = this.checkAlternateContent(element);
+            switch (element.localName || element.nodeName) {
                 case "t":
-                    c.childNodes;
-                    result.children.push(this.parseText(c, result));
+                    if (element.childNodes.length > 0) {
+                        result.children.push(this.parseRun(element, result));
+                    }
+                    else {
+                        result.children.push({
+                            type: DomType.Text,
+                            text: element.textContent
+                        });
+                    }
                     break;
                 case "delText":
                     result.children.push({
                         type: DomType.DeletedText,
-                        text: c.textContent
+                        text: element.textContent
                     });
                     break;
                 case "commentReference":
-                    result.children.push(new WmlCommentReference(globalXmlParser.attr(c, "id")));
+                    result.children.push(new WmlCommentReference(globalXmlParser.attr(element, "id")));
                     break;
                 case "fldSimple":
                     result.children.push({
                         type: DomType.SimpleField,
-                        instruction: globalXmlParser.attr(c, "instr"),
-                        lock: globalXmlParser.boolAttr(c, "lock", false),
-                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
+                        instruction: globalXmlParser.attr(element, "instr"),
+                        lock: globalXmlParser.boolAttr(element, "lock", false),
+                        dirty: globalXmlParser.boolAttr(element, "dirty", false)
                     });
                     break;
                 case "instrText":
                     result.fieldRun = true;
                     result.children.push({
                         type: DomType.Instruction,
-                        text: c.textContent
+                        text: element.textContent
                     });
                     break;
                 case "fldChar":
                     result.fieldRun = true;
                     result.children.push({
                         type: DomType.ComplexField,
-                        charType: globalXmlParser.attr(c, "fldCharType"),
-                        lock: globalXmlParser.boolAttr(c, "lock", false),
-                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
+                        charType: globalXmlParser.attr(element, "fldCharType"),
+                        lock: globalXmlParser.boolAttr(element, "lock", false),
+                        dirty: globalXmlParser.boolAttr(element, "dirty", false)
                     });
                     break;
                 case "noBreakHyphen":
@@ -1904,7 +1919,7 @@ class DocumentParser {
                 case "br":
                     result.children.push({
                         type: DomType.Break,
-                        break: globalXmlParser.attr(c, "type") || "textWrapping"
+                        break: globalXmlParser.attr(element, "type") || "textWrapping"
                     });
                     break;
                 case "lastRenderedPageBreak":
@@ -1916,8 +1931,8 @@ class DocumentParser {
                 case "sym":
                     result.children.push({
                         type: DomType.Symbol,
-                        font: encloseFontFamily(globalXmlParser.attr(c, "font")),
-                        char: globalXmlParser.attr(c, "char")
+                        font: encloseFontFamily(globalXmlParser.attr(element, "font")),
+                        char: globalXmlParser.attr(element, "char")
                     });
                     break;
                 case "tab":
@@ -1926,53 +1941,28 @@ class DocumentParser {
                 case "footnoteReference":
                     result.children.push({
                         type: DomType.FootnoteReference,
-                        id: globalXmlParser.attr(c, "id")
+                        id: globalXmlParser.attr(element, "id")
                     });
                     break;
                 case "endnoteReference":
                     result.children.push({
                         type: DomType.EndnoteReference,
-                        id: globalXmlParser.attr(c, "id")
+                        id: globalXmlParser.attr(element, "id")
                     });
                     break;
                 case "drawing":
-                    let d = this.parseDrawing(c);
+                    let d = this.parseDrawing(element);
                     if (d)
                         result.children = [d];
                     break;
                 case "pict":
-                    result.children.push(this.parseVmlPicture(c));
+                    result.children.push(this.parseVmlPicture(element));
                     break;
                 case "rPr":
-                    this.parseRunProperties(c, result);
+                    this.parseRunProperties(element, result);
                     break;
             }
         });
-        return result;
-    }
-    parseText(node, parent) {
-        var result = { type: DomType.Text, parent: parent, children: [] };
-        xmlUtil.foreach(node, c => {
-            c = this.checkAlternateContent(c);
-            switch (c.localName) {
-                case "t":
-                    c.childNodes;
-                    result.children.push(this.parseText(c, result));
-                    break;
-                case "br":
-                    result.children.push({
-                        type: DomType.Break,
-                        break: globalXmlParser.attr(c, "type") || "textWrapping"
-                    });
-                    break;
-            }
-        });
-        if (node.childNodes.length == 0) {
-            result.text = node.textContent;
-        }
-        else if (node.childNodes.length == 1) {
-            result.text = node.childNodes[0].textContent;
-        }
         return result;
     }
     parseMathElement(elem) {
