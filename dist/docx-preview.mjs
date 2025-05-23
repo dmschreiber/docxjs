@@ -1858,59 +1858,59 @@ class DocumentParser {
     }
     parseRun(node, parent) {
         var result = { type: DomType.Run, parent: parent, children: [] };
-        node.childNodes.forEach((c, i) => {
-            if (c.nodeType == Node.TEXT_NODE) {
+        node.childNodes.forEach((cn, i) => {
+            if (cn.nodeType == Node.TEXT_NODE) {
                 result.children.push({
                     type: DomType.Text,
-                    text: c.textContent
+                    text: cn.textContent
                 });
                 return result;
             }
-            let element = c;
-            element = this.checkAlternateContent(element);
-            switch (element.localName) {
+            let c = cn;
+            c = this.checkAlternateContent(c);
+            switch (c.localName) {
                 case "t":
-                    if (element.childNodes.length > 0) {
-                        result.children.push(this.parseRun(element, result));
+                    if (c.childNodes.length > 0) {
+                        result.children.push(this.parseRun(c, result));
                     }
                     else {
                         result.children.push({
                             type: DomType.Text,
-                            text: element.textContent
+                            text: c.textContent
                         });
                     }
                     break;
                 case "delText":
                     result.children.push({
                         type: DomType.DeletedText,
-                        text: element.textContent
+                        text: c.textContent
                     });
                     break;
                 case "commentReference":
-                    result.children.push(new WmlCommentReference(globalXmlParser.attr(element, "id")));
+                    result.children.push(new WmlCommentReference(globalXmlParser.attr(c, "id")));
                     break;
                 case "fldSimple":
                     result.children.push({
                         type: DomType.SimpleField,
-                        instruction: globalXmlParser.attr(element, "instr"),
-                        lock: globalXmlParser.boolAttr(element, "lock", false),
-                        dirty: globalXmlParser.boolAttr(element, "dirty", false)
+                        instruction: globalXmlParser.attr(c, "instr"),
+                        lock: globalXmlParser.boolAttr(c, "lock", false),
+                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
                     });
                     break;
                 case "instrText":
                     result.fieldRun = true;
                     result.children.push({
                         type: DomType.Instruction,
-                        text: element.textContent
+                        text: c.textContent
                     });
                     break;
                 case "fldChar":
                     result.fieldRun = true;
                     result.children.push({
                         type: DomType.ComplexField,
-                        charType: globalXmlParser.attr(element, "fldCharType"),
-                        lock: globalXmlParser.boolAttr(element, "lock", false),
-                        dirty: globalXmlParser.boolAttr(element, "dirty", false)
+                        charType: globalXmlParser.attr(c, "fldCharType"),
+                        lock: globalXmlParser.boolAttr(c, "lock", false),
+                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
                     });
                     break;
                 case "noBreakHyphen":
@@ -1919,7 +1919,7 @@ class DocumentParser {
                 case "br":
                     result.children.push({
                         type: DomType.Break,
-                        break: globalXmlParser.attr(element, "type") || "textWrapping"
+                        break: globalXmlParser.attr(c, "type") || "textWrapping"
                     });
                     break;
                 case "lastRenderedPageBreak":
@@ -1931,8 +1931,8 @@ class DocumentParser {
                 case "sym":
                     result.children.push({
                         type: DomType.Symbol,
-                        font: encloseFontFamily(globalXmlParser.attr(element, "font")),
-                        char: globalXmlParser.attr(element, "char")
+                        font: encloseFontFamily(globalXmlParser.attr(c, "font")),
+                        char: globalXmlParser.attr(c, "char")
                     });
                     break;
                 case "tab":
@@ -1941,25 +1941,25 @@ class DocumentParser {
                 case "footnoteReference":
                     result.children.push({
                         type: DomType.FootnoteReference,
-                        id: globalXmlParser.attr(element, "id")
+                        id: globalXmlParser.attr(c, "id")
                     });
                     break;
                 case "endnoteReference":
                     result.children.push({
                         type: DomType.EndnoteReference,
-                        id: globalXmlParser.attr(element, "id")
+                        id: globalXmlParser.attr(c, "id")
                     });
                     break;
                 case "drawing":
-                    let d = this.parseDrawing(element);
+                    let d = this.parseDrawing(c);
                     if (d)
                         result.children = [d];
                     break;
                 case "pict":
-                    result.children.push(this.parseVmlPicture(element));
+                    result.children.push(this.parseVmlPicture(c));
                     break;
                 case "rPr":
-                    this.parseRunProperties(element, result);
+                    this.parseRunProperties(c, result);
                     break;
             }
         });

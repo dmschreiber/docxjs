@@ -634,26 +634,26 @@ export class DocumentParser {
 	parseRun(node: Element, parent?: OpenXmlElement): WmlRun {
 		var result: WmlRun = <WmlRun>{ type: DomType.Run, parent: parent, children: [] };
 
-		node.childNodes.forEach((c : ChildNode, i) => {
-			if (c.nodeType == Node.TEXT_NODE) {
+		node.childNodes.forEach((cn : ChildNode, i) => {
+			if (cn.nodeType == Node.TEXT_NODE) {
 				result.children.push(<WmlText>{
 					type: DomType.Text,
-					text: c.textContent
+					text: cn.textContent
 				});
 				return result;
 			}
 
-			let element = <Element>c;
-			element = this.checkAlternateContent(element);
+			let c = <Element>cn;
+			c = this.checkAlternateContent(c);
 
-			switch (element.localName) {
+			switch (c.localName) {
 				case "t":
-					if (element.childNodes.length > 0) {
-						result.children.push(this.parseRun(element, result));
+					if (c.childNodes.length > 0) {
+						result.children.push(this.parseRun(c, result));
 					} else {
 						result.children.push(<WmlText>{
                             type: DomType.Text,
-                            text: element.textContent
+                            text: c.textContent
                         });
 					}
 					break;
@@ -661,20 +661,20 @@ export class DocumentParser {
 				case "delText":
 					result.children.push(<WmlText>{
 						type: DomType.DeletedText,
-						text: element.textContent
+						text: c.textContent
 					});
 					break;
 
 				case "commentReference":
-					result.children.push(new WmlCommentReference(xml.attr(element, "id")));
+					result.children.push(new WmlCommentReference(xml.attr(c, "id")));
 					break;
 
 				case "fldSimple":
 					result.children.push(<WmlFieldSimple>{
 						type: DomType.SimpleField,
-						instruction: xml.attr(element, "instr"),
-						lock: xml.boolAttr(element, "lock", false),
-						dirty: xml.boolAttr(element, "dirty", false)
+						instruction: xml.attr(c, "instr"),
+						lock: xml.boolAttr(c, "lock", false),
+						dirty: xml.boolAttr(c, "dirty", false)
 					});
 					break;
 
@@ -682,7 +682,7 @@ export class DocumentParser {
 					result.fieldRun = true;
 					result.children.push(<WmlInstructionText>{
 						type: DomType.Instruction,
-						text: element.textContent
+						text: c.textContent
 					});
 					break;
 
@@ -690,9 +690,9 @@ export class DocumentParser {
 					result.fieldRun = true;
 					result.children.push(<WmlFieldChar>{
 						type: DomType.ComplexField,
-						charType: xml.attr(element, "fldCharType"),
-						lock: xml.boolAttr(element, "lock", false),
-						dirty: xml.boolAttr(element, "dirty", false)
+						charType: xml.attr(c, "fldCharType"),
+						lock: xml.boolAttr(c, "lock", false),
+						dirty: xml.boolAttr(c, "dirty", false)
 					});
 					break;
 
@@ -703,7 +703,7 @@ export class DocumentParser {
 				case "br":
 					result.children.push(<WmlBreak>{
 						type: DomType.Break,
-						break: xml.attr(element, "type") || "textWrapping"
+						break: xml.attr(c, "type") || "textWrapping"
 					});
 					break;
 
@@ -717,8 +717,8 @@ export class DocumentParser {
 				case "sym":
 					result.children.push(<WmlSymbol>{
 						type: DomType.Symbol,
-						font: encloseFontFamily(xml.attr(element, "font")),
-						char: xml.attr(element, "char")
+						font: encloseFontFamily(xml.attr(c, "font")),
+						char: xml.attr(c, "char")
 					});
 					break;
 
@@ -729,30 +729,30 @@ export class DocumentParser {
 				case "footnoteReference":
 					result.children.push(<WmlNoteReference>{
 						type: DomType.FootnoteReference,
-						id: xml.attr(element, "id")
+						id: xml.attr(c, "id")
 					});
 					break;
 
 				case "endnoteReference":
 					result.children.push(<WmlNoteReference>{
 						type: DomType.EndnoteReference,
-						id: xml.attr(element, "id")
+						id: xml.attr(c, "id")
 					});
 					break;
 
 				case "drawing":
-					let d = this.parseDrawing(element);
+					let d = this.parseDrawing(c);
 
 					if (d)
 						result.children = [d];
 					break;
 
 				case "pict":
-					result.children.push(this.parseVmlPicture(element));
+					result.children.push(this.parseVmlPicture(c));
 					break;
 
 				case "rPr":
-					this.parseRunProperties(element, result);
+					this.parseRunProperties(c, result);
 					break;
 			}
 		});
