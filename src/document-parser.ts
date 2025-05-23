@@ -634,15 +634,28 @@ export class DocumentParser {
 	parseRun(node: Element, parent?: OpenXmlElement): WmlRun {
 		var result: WmlRun = <WmlRun>{ type: DomType.Run, parent: parent, children: [] };
 
-		xmlUtil.foreach(node, c => {
+		node.childNodes.forEach((cn : ChildNode, i) => {
+			if (cn.nodeType == Node.TEXT_NODE) {
+				result.children.push(<WmlText>{
+					type: DomType.Text,
+					text: cn.textContent
+				});
+				return result;
+			}
+
+			let c = <Element>cn;
 			c = this.checkAlternateContent(c);
 
 			switch (c.localName) {
 				case "t":
-					result.children.push(<WmlText>{
-						type: DomType.Text,
-						text: c.textContent
-					});//.replace(" ", "\u00A0"); // TODO
+					if (c.childNodes.length > 0) {
+						result.children.push(this.parseRun(c, result));
+					} else {
+						result.children.push(<WmlText>{
+							type: DomType.Text,
+							text: c.textContent
+						});
+					}
 					break;
 
 				case "delText":

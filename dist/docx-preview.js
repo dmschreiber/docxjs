@@ -1862,14 +1862,27 @@
         }
         parseRun(node, parent) {
             var result = { type: DomType.Run, parent: parent, children: [] };
-            xmlUtil.foreach(node, c => {
+            node.childNodes.forEach((cn, i) => {
+                if (cn.nodeType == Node.TEXT_NODE) {
+                    result.children.push({
+                        type: DomType.Text,
+                        text: cn.textContent
+                    });
+                    return result;
+                }
+                let c = cn;
                 c = this.checkAlternateContent(c);
                 switch (c.localName) {
                     case "t":
-                        result.children.push({
-                            type: DomType.Text,
-                            text: c.textContent
-                        });
+                        if (c.childNodes.length > 0) {
+                            result.children.push(this.parseRun(c, result));
+                        }
+                        else {
+                            result.children.push({
+                                type: DomType.Text,
+                                text: c.textContent
+                            });
+                        }
                         break;
                     case "delText":
                         result.children.push({
