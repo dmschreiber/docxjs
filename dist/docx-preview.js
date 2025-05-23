@@ -1866,10 +1866,7 @@
                 c = this.checkAlternateContent(c);
                 switch (c.localName) {
                     case "t":
-                        result.children.push({
-                            type: DomType.Text,
-                            text: c.textContent
-                        });
+                        result.children.push(this.parseText(node, result));
                         break;
                     case "delText":
                         result.children.push({
@@ -1951,6 +1948,29 @@
                         break;
                     case "rPr":
                         this.parseRunProperties(c, result);
+                        break;
+                }
+            });
+            return result;
+        }
+        parseText(node, parent) {
+            var result = { type: DomType.Run, parent: parent, children: [] };
+            xmlUtil.foreach(node, c => {
+                c = this.checkAlternateContent(c);
+                switch (c.localName) {
+                    case undefined:
+                        if (c.nodeName == "#text") {
+                            result.children.push({
+                                type: DomType.Text,
+                                text: c.textContent
+                            });
+                        }
+                        break;
+                    case "br":
+                        result.children.push({
+                            type: DomType.Break,
+                            break: globalXmlParser.attr(c, "type") || "textWrapping"
+                        });
                         break;
                 }
             });
