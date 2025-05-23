@@ -1868,7 +1868,7 @@ class DocumentParser {
             }
             let element = c;
             element = this.checkAlternateContent(element);
-            switch (element.localName || element.nodeName) {
+            switch (element.localName) {
                 case "t":
                     if (element.childNodes.length > 0) {
                         result.children.push(this.parseRun(element, result));
