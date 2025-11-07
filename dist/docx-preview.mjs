@@ -1,3 +1,9 @@
+/*
+ * @license
+ * docx-preview <https://github.com/VolodymyrBaydalka/docxjs>
+ * Released under Apache License 2.0  <https://github.com/VolodymyrBaydalka/docxjs/blob/master/LICENSE>
+ * Copyright Volodymyr Baydalka
+ */
 import JSZip from 'jszip';
 
 var RelationshipTypes;
@@ -167,7 +173,7 @@ class XmlParser {
         const result = [];
         for (let i = 0, l = elem.childNodes.length; i < l; i++) {
             let c = elem.childNodes.item(i);
-            if (c.nodeType == 1 && (localName == null || c.localName == localName))
+            if (c.nodeType == Node.ELEMENT_NODE && (localName == null || c.localName == localName))
                 result.push(c);
         }
         return result;
@@ -1216,7 +1222,7 @@ function deobfuscate(data, guidKey) {
     const trimmed = guidKey.replace(/{|}|-/g, "");
     const numbers = new Array(len);
     for (let i = 0; i < len; i++)
-        numbers[len - i - 1] = parseInt(trimmed.substr(i * 2, 2), 16);
+        numbers[len - i - 1] = parseInt(trimmed.substring(i * 2, i * 2 + 2), 16);
     for (let i = 0; i < 32; i++)
         data[i] = data[i] ^ numbers[i % len];
     return data;
@@ -1359,42 +1365,42 @@ var autos = {
     shd: "inherit",
     color: "black",
     borderColor: "black",
-    highlight: "transparent"
+    highlight: "transparent",
 };
 const supportedNamespaceURIs = [];
 const mmlTagMap = {
-    "oMath": DomType.MmlMath,
-    "oMathPara": DomType.MmlMathParagraph,
-    "f": DomType.MmlFraction,
-    "func": DomType.MmlFunction,
-    "fName": DomType.MmlFunctionName,
-    "num": DomType.MmlNumerator,
-    "den": DomType.MmlDenominator,
-    "rad": DomType.MmlRadical,
-    "deg": DomType.MmlDegree,
-    "e": DomType.MmlBase,
-    "sSup": DomType.MmlSuperscript,
-    "sSub": DomType.MmlSubscript,
-    "sPre": DomType.MmlPreSubSuper,
-    "sup": DomType.MmlSuperArgument,
-    "sub": DomType.MmlSubArgument,
-    "d": DomType.MmlDelimiter,
-    "nary": DomType.MmlNary,
-    "eqArr": DomType.MmlEquationArray,
-    "lim": DomType.MmlLimit,
-    "limLow": DomType.MmlLimitLower,
-    "m": DomType.MmlMatrix,
-    "mr": DomType.MmlMatrixRow,
-    "box": DomType.MmlBox,
-    "bar": DomType.MmlBar,
-    "groupChr": DomType.MmlGroupChar
+    oMath: DomType.MmlMath,
+    oMathPara: DomType.MmlMathParagraph,
+    f: DomType.MmlFraction,
+    func: DomType.MmlFunction,
+    fName: DomType.MmlFunctionName,
+    num: DomType.MmlNumerator,
+    den: DomType.MmlDenominator,
+    rad: DomType.MmlRadical,
+    deg: DomType.MmlDegree,
+    e: DomType.MmlBase,
+    sSup: DomType.MmlSuperscript,
+    sSub: DomType.MmlSubscript,
+    sPre: DomType.MmlPreSubSuper,
+    sup: DomType.MmlSuperArgument,
+    sub: DomType.MmlSubArgument,
+    d: DomType.MmlDelimiter,
+    nary: DomType.MmlNary,
+    eqArr: DomType.MmlEquationArray,
+    lim: DomType.MmlLimit,
+    limLow: DomType.MmlLimitLower,
+    m: DomType.MmlMatrix,
+    mr: DomType.MmlMatrixRow,
+    box: DomType.MmlBox,
+    bar: DomType.MmlBar,
+    groupChr: DomType.MmlGroupChar,
 };
 class DocumentParser {
     constructor(options) {
         this.options = {
             ignoreWidth: false,
             debug: false,
-            ...options
+            ...options,
         };
     }
     parseNotes(xmlDoc, elemName, elemClass) {
@@ -1428,7 +1434,9 @@ class DocumentParser {
         return {
             type: DomType.Document,
             children: this.parseBodyElements(xbody),
-            props: sectPr ? parseSectionProperties(sectPr, globalXmlParser) : {},
+            props: sectPr
+                ? parseSectionProperties(sectPr, globalXmlParser)
+                : {},
             cssStyle: background ? this.parseBackground(background) : {},
         };
     }
@@ -1442,7 +1450,7 @@ class DocumentParser {
     }
     parseBodyElements(element) {
         var children = [];
-        for (let elem of globalXmlParser.elements(element)) {
+        for (const elem of globalXmlParser.elements(element)) {
             switch (elem.localName) {
                 case "p":
                     children.push(this.parseParagraph(elem));
@@ -1454,7 +1462,7 @@ class DocumentParser {
                     children.push(this.parseTable(elem));
                     break;
                 case "sdt":
-                    children.push(...this.parseSdt(elem, e => this.parseBodyElements(e)));
+                    children.push(...this.parseSdt(elem, (e) => this.parseBodyElements(e)));
                     break;
             }
         }
@@ -1462,7 +1470,7 @@ class DocumentParser {
     }
     parseStylesFile(xstyles) {
         var result = [];
-        xmlUtil.foreach(xstyles, n => {
+        for (const n of globalXmlParser.elements(xstyles)) {
             switch (n.localName) {
                 case "style":
                     result.push(this.parseStyle(n));
@@ -1471,7 +1479,7 @@ class DocumentParser {
                     result.push(this.parseDefaultStyles(n));
                     break;
             }
-        });
+        }
         return result;
     }
     parseDefaultStyles(node) {
@@ -1480,16 +1488,16 @@ class DocumentParser {
             name: null,
             target: null,
             basedOn: null,
-            styles: []
+            styles: [],
         };
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "rPrDefault":
                     var rPr = globalXmlParser.element(c, "rPr");
                     if (rPr)
                         result.styles.push({
                             target: "span",
-                            values: this.parseDefaultProperties(rPr, {})
+                            values: this.parseDefaultProperties(rPr, {}),
                         });
                     break;
                 case "pPrDefault":
@@ -1497,11 +1505,11 @@ class DocumentParser {
                     if (pPr)
                         result.styles.push({
                             target: "p",
-                            values: this.parseDefaultProperties(pPr, {})
+                            values: this.parseDefaultProperties(pPr, {}),
                         });
                     break;
             }
-        });
+        }
         return result;
     }
     parseStyle(node) {
@@ -1512,7 +1520,7 @@ class DocumentParser {
             target: null,
             basedOn: null,
             styles: [],
-            linked: null
+            linked: null,
         };
         switch (globalXmlParser.attr(node, "type")) {
             case "paragraph":
@@ -1525,7 +1533,7 @@ class DocumentParser {
                 result.target = "span";
                 break;
         }
-        xmlUtil.foreach(node, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "basedOn":
                     result.basedOn = globalXmlParser.attr(n, "val");
@@ -1545,14 +1553,14 @@ class DocumentParser {
                 case "pPr":
                     result.styles.push({
                         target: "p",
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     result.paragraphProps = parseParagraphProperties(n, globalXmlParser);
                     break;
                 case "rPr":
                     result.styles.push({
                         target: "span",
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     result.runProps = parseRunProperties(n, globalXmlParser);
                     break;
@@ -1560,7 +1568,7 @@ class DocumentParser {
                 case "tcPr":
                     result.styles.push({
                         target: "td",
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     break;
                 case "tblStylePr":
@@ -1576,9 +1584,10 @@ class DocumentParser {
                 case "uiPriority":
                     break;
                 default:
-                    this.options.debug && console.warn(`DOCX: Unknown style element: ${n.localName}`);
+                    this.options.debug &&
+                        console.warn(`DOCX: Unknown style element: ${n.localName}`);
             }
-        });
+        }
         return result;
     }
     parseTableStyle(node) {
@@ -1619,22 +1628,23 @@ class DocumentParser {
                 modificator = ":not(.no-hband)";
                 selector = "tr.even-row";
                 break;
-            default: return [];
+            default:
+                return [];
         }
-        xmlUtil.foreach(node, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "pPr":
                     result.push({
                         target: `${selector} p`,
                         mod: modificator,
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     break;
                 case "rPr":
                     result.push({
                         target: `${selector} span`,
                         mod: modificator,
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     break;
                 case "tblPr":
@@ -1642,22 +1652,21 @@ class DocumentParser {
                     result.push({
                         target: selector,
                         mod: modificator,
-                        values: this.parseDefaultProperties(n, {})
+                        values: this.parseDefaultProperties(n, {}),
                     });
                     break;
             }
-        });
+        }
         return result;
     }
-    parseNumberingFile(xnums) {
+    parseNumberingFile(node) {
         var result = [];
         var mapping = {};
         var bullets = [];
-        xmlUtil.foreach(xnums, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "abstractNum":
-                    this.parseAbstractNumbering(n, bullets)
-                        .forEach(x => result.push(x));
+                    this.parseAbstractNumbering(n, bullets).forEach((x) => result.push(x));
                     break;
                 case "numPicBullet":
                     bullets.push(this.parseNumberingPicBullet(n));
@@ -1668,30 +1677,32 @@ class DocumentParser {
                     mapping[abstractNumId] = numId;
                     break;
             }
-        });
-        result.forEach(x => x.id = mapping[x.id]);
+        }
+        result.forEach((x) => (x.id = mapping[x.id]));
         return result;
     }
     parseNumberingPicBullet(elem) {
         var pict = globalXmlParser.element(elem, "pict");
         var shape = pict && globalXmlParser.element(pict, "shape");
         var imagedata = shape && globalXmlParser.element(shape, "imagedata");
-        return imagedata ? {
-            id: globalXmlParser.intAttr(elem, "numPicBulletId"),
-            src: globalXmlParser.attr(imagedata, "id"),
-            style: globalXmlParser.attr(shape, "style")
-        } : null;
+        return imagedata
+            ? {
+                id: globalXmlParser.intAttr(elem, "numPicBulletId"),
+                src: globalXmlParser.attr(imagedata, "id"),
+                style: globalXmlParser.attr(shape, "style"),
+            }
+            : null;
     }
     parseAbstractNumbering(node, bullets) {
         var result = [];
         var id = globalXmlParser.attr(node, "abstractNumId");
-        xmlUtil.foreach(node, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "lvl":
                     result.push(this.parseNumberingLevel(id, n, bullets));
                     break;
             }
-        });
+        }
         return result;
     }
     parseNumberingLevel(id, node, bullets) {
@@ -1702,9 +1713,9 @@ class DocumentParser {
             pStyleName: undefined,
             pStyle: {},
             rStyle: {},
-            suff: "tab"
+            suff: "tab",
         };
-        xmlUtil.foreach(node, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "start":
                     result.start = globalXmlParser.intAttr(n, "val");
@@ -1716,8 +1727,8 @@ class DocumentParser {
                     this.parseDefaultProperties(n, result.rStyle);
                     break;
                 case "lvlPicBulletId":
-                    var id = globalXmlParser.intAttr(n, "val");
-                    result.bullet = bullets.find(x => x?.id == id);
+                    var bulletId = globalXmlParser.intAttr(n, "val");
+                    result.bullet = bullets.find((x) => x?.id == bulletId);
                     break;
                 case "lvlText":
                     result.levelText = globalXmlParser.attr(n, "val");
@@ -1732,7 +1743,7 @@ class DocumentParser {
                     result.suff = globalXmlParser.attr(n, "val");
                     break;
             }
-        });
+        }
         return result;
     }
     parseSdt(node, parser) {
@@ -1742,17 +1753,21 @@ class DocumentParser {
     parseInserted(node, parentParser) {
         return {
             type: DomType.Inserted,
-            children: parentParser(node)?.children ?? []
+            children: parentParser(node)?.children ?? [],
         };
     }
     parseDeleted(node, parentParser) {
         return {
             type: DomType.Deleted,
-            children: parentParser(node)?.children ?? []
+            children: parentParser(node)?.children ?? [],
         };
     }
     parseAltChunk(node) {
-        return { type: DomType.AltChunk, children: [], id: globalXmlParser.attr(node, "id") };
+        return {
+            type: DomType.AltChunk,
+            children: [],
+            id: globalXmlParser.attr(node, "id"),
+        };
     }
     parseParagraph(node) {
         var result = { type: DomType.Paragraph, children: [] };
@@ -1787,20 +1802,20 @@ class DocumentParser {
                     result.children.push(this.parseMathElement(el));
                     break;
                 case "sdt":
-                    result.children.push(...this.parseSdt(el, e => this.parseParagraph(e).children));
+                    result.children.push(...this.parseSdt(el, (e) => this.parseParagraph(e).children));
                     break;
                 case "ins":
-                    result.children.push(this.parseInserted(el, e => this.parseParagraph(e)));
+                    result.children.push(this.parseInserted(el, (e) => this.parseParagraph(e)));
                     break;
                 case "del":
-                    result.children.push(this.parseDeleted(el, e => this.parseParagraph(e)));
+                    result.children.push(this.parseDeleted(el, (e) => this.parseParagraph(e)));
                     break;
             }
         }
         return result;
     }
     parseParagraphProperties(elem, paragraph) {
-        this.parseDefaultProperties(elem, paragraph.cssStyle = {}, null, c => {
+        this.parseDefaultProperties(elem, (paragraph.cssStyle = {}), null, (c) => {
             if (parseParagraphProperty(c, paragraph, globalXmlParser))
                 return true;
             switch (c.localName) {
@@ -1827,42 +1842,54 @@ class DocumentParser {
             paragraph.cssStyle["float"] = "left";
     }
     parseHyperlink(node, parent) {
-        var result = { type: DomType.Hyperlink, parent: parent, children: [] };
+        var result = {
+            type: DomType.Hyperlink,
+            parent: parent,
+            children: [],
+        };
         result.anchor = globalXmlParser.attr(node, "anchor");
         result.id = globalXmlParser.attr(node, "id");
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "r":
                     result.children.push(this.parseRun(c, result));
                     break;
             }
-        });
+        }
         return result;
     }
     parseSmartTag(node, parent) {
-        var result = { type: DomType.SmartTag, parent, children: [] };
+        var result = {
+            type: DomType.SmartTag,
+            parent,
+            children: [],
+        };
         var uri = globalXmlParser.attr(node, "uri");
         var element = globalXmlParser.attr(node, "element");
         if (uri)
             result.uri = uri;
         if (element)
             result.element = element;
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "r":
                     result.children.push(this.parseRun(c, result));
                     break;
             }
-        });
+        }
         return result;
     }
     parseRun(node, parent) {
-        var result = { type: DomType.Run, parent: parent, children: [] };
+        var result = {
+            type: DomType.Run,
+            parent: parent,
+            children: [],
+        };
         node.childNodes.forEach((cn, i) => {
             if (cn.nodeType == Node.TEXT_NODE) {
                 result.children.push({
                     type: DomType.Text,
-                    text: cn.textContent
+                    text: cn.textContent,
                 });
                 return result;
             }
@@ -1876,14 +1903,14 @@ class DocumentParser {
                     else {
                         result.children.push({
                             type: DomType.Text,
-                            text: c.textContent
+                            text: c.textContent,
                         });
                     }
                     break;
                 case "delText":
                     result.children.push({
                         type: DomType.DeletedText,
-                        text: c.textContent
+                        text: c.textContent,
                     });
                     break;
                 case "commentReference":
@@ -1894,14 +1921,14 @@ class DocumentParser {
                         type: DomType.SimpleField,
                         instruction: globalXmlParser.attr(c, "instr"),
                         lock: globalXmlParser.boolAttr(c, "lock", false),
-                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
+                        dirty: globalXmlParser.boolAttr(c, "dirty", false),
                     });
                     break;
                 case "instrText":
                     result.fieldRun = true;
                     result.children.push({
                         type: DomType.Instruction,
-                        text: c.textContent
+                        text: c.textContent,
                     });
                     break;
                 case "fldChar":
@@ -1910,7 +1937,7 @@ class DocumentParser {
                         type: DomType.ComplexField,
                         charType: globalXmlParser.attr(c, "fldCharType"),
                         lock: globalXmlParser.boolAttr(c, "lock", false),
-                        dirty: globalXmlParser.boolAttr(c, "dirty", false)
+                        dirty: globalXmlParser.boolAttr(c, "dirty", false),
                     });
                     break;
                 case "noBreakHyphen":
@@ -1919,20 +1946,20 @@ class DocumentParser {
                 case "br":
                     result.children.push({
                         type: DomType.Break,
-                        break: globalXmlParser.attr(c, "type") || "textWrapping"
+                        break: globalXmlParser.attr(c, "type") || "textWrapping",
                     });
                     break;
                 case "lastRenderedPageBreak":
                     result.children.push({
                         type: DomType.Break,
-                        break: "lastRenderedPageBreak"
+                        break: "lastRenderedPageBreak",
                     });
                     break;
                 case "sym":
                     result.children.push({
                         type: DomType.Symbol,
                         font: encloseFontFamily(globalXmlParser.attr(c, "font")),
-                        char: globalXmlParser.attr(c, "char")
+                        char: globalXmlParser.attr(c, "char"),
                     });
                     break;
                 case "tab":
@@ -1941,13 +1968,13 @@ class DocumentParser {
                 case "footnoteReference":
                     result.children.push({
                         type: DomType.FootnoteReference,
-                        id: globalXmlParser.attr(c, "id")
+                        id: globalXmlParser.attr(c, "id"),
                     });
                     break;
                 case "endnoteReference":
                     result.children.push({
                         type: DomType.EndnoteReference,
-                        id: globalXmlParser.attr(c, "id")
+                        id: globalXmlParser.attr(c, "id"),
                     });
                     break;
                 case "drawing":
@@ -1967,7 +1994,10 @@ class DocumentParser {
     }
     parseMathElement(elem) {
         const propsTag = `${elem.localName}Pr`;
-        const result = { type: mmlTagMap[elem.localName], children: [] };
+        const result = {
+            type: mmlTagMap[elem.localName],
+            children: [],
+        };
         for (const el of globalXmlParser.elements(elem)) {
             const childType = mmlTagMap[el.localName];
             if (childType) {
@@ -2011,7 +2041,7 @@ class DocumentParser {
         return result;
     }
     parseRunProperties(elem, run) {
-        this.parseDefaultProperties(elem, run.cssStyle = {}, null, c => {
+        this.parseDefaultProperties(elem, (run.cssStyle = {}), null, (c) => {
             switch (c.localName) {
                 case "rStyle":
                     run.styleName = globalXmlParser.attr(c, "val");
@@ -2034,7 +2064,7 @@ class DocumentParser {
         return result;
     }
     checkAlternateContent(elem) {
-        if (elem.localName != 'AlternateContent')
+        if (elem.localName != "AlternateContent")
             return elem;
         var choice = globalXmlParser.element(elem, "Choice");
         if (choice) {
@@ -2055,7 +2085,11 @@ class DocumentParser {
         }
     }
     parseDrawingWrapper(node) {
-        var result = { type: DomType.Drawing, children: [], cssStyle: {} };
+        var result = {
+            type: DomType.Drawing,
+            children: [],
+            cssStyle: {},
+        };
         var isAnchor = node.localName == "anchor";
         let wrapType = null;
         let simplePos = globalXmlParser.boolAttr(node, "simplePos");
@@ -2080,11 +2114,12 @@ class DocumentParser {
                         let pos = n.localName == "positionH" ? posX : posY;
                         var alignNode = globalXmlParser.element(n, "align");
                         var offsetNode = globalXmlParser.element(n, "posOffset");
-                        pos.relative = globalXmlParser.attr(n, "relativeFrom") ?? pos.relative;
+                        pos.relative =
+                            globalXmlParser.attr(n, "relativeFrom") ?? pos.relative;
                         if (alignNode)
                             pos.align = alignNode.textContent;
                         if (offsetNode)
-                            pos.offset = xmlUtil.sizeValue(offsetNode, LengthUsage.Emu);
+                            pos.offset = convertLength(offsetNode.textContent, LengthUsage.Emu);
                     }
                     break;
                 case "wrapTopAndBottom":
@@ -2101,15 +2136,15 @@ class DocumentParser {
             }
         }
         if (wrapType == "wrapTopAndBottom") {
-            result.cssStyle['display'] = 'block';
+            result.cssStyle["display"] = "block";
             if (posX.align) {
-                result.cssStyle['text-align'] = posX.align;
-                result.cssStyle['width'] = "100%";
+                result.cssStyle["text-align"] = posX.align;
+                result.cssStyle["width"] = "100%";
             }
         }
         else if (wrapType == "wrapNone") {
-            result.cssStyle['display'] = 'block';
-            result.cssStyle['position'] = 'relative';
+            result.cssStyle["display"] = "block";
+            result.cssStyle["position"] = "relative";
             result.cssStyle["width"] = "0px";
             result.cssStyle["height"] = "0px";
             if (posX.offset)
@@ -2117,7 +2152,8 @@ class DocumentParser {
             if (posY.offset)
                 result.cssStyle["top"] = posY.offset;
         }
-        else if (isAnchor && (posX.align == 'left' || posX.align == 'right')) {
+        else if (isAnchor &&
+            (posX.align == "left" || posX.align == "right")) {
             result.cssStyle["float"] = posX.align;
         }
         return result;
@@ -2136,27 +2172,39 @@ class DocumentParser {
         var result = { type: DomType.Image, src: "", cssStyle: {} };
         var blipFill = globalXmlParser.element(elem, "blipFill");
         var blip = globalXmlParser.element(blipFill, "blip");
+        var srcRect = globalXmlParser.element(blipFill, "srcRect");
         result.src = globalXmlParser.attr(blip, "embed");
+        if (srcRect) {
+            result.srcRect = [
+                globalXmlParser.intAttr(srcRect, "l", 0) / 100000,
+                globalXmlParser.intAttr(srcRect, "t", 0) / 100000,
+                globalXmlParser.intAttr(srcRect, "r", 0) / 100000,
+                globalXmlParser.intAttr(srcRect, "b", 0) / 100000,
+            ];
+        }
         var spPr = globalXmlParser.element(elem, "spPr");
         var xfrm = globalXmlParser.element(spPr, "xfrm");
         result.cssStyle["position"] = "relative";
-        for (var n of globalXmlParser.elements(xfrm)) {
-            switch (n.localName) {
-                case "ext":
-                    result.cssStyle["width"] = globalXmlParser.lengthAttr(n, "cx", LengthUsage.Emu);
-                    result.cssStyle["height"] = globalXmlParser.lengthAttr(n, "cy", LengthUsage.Emu);
-                    break;
-                case "off":
-                    result.cssStyle["left"] = globalXmlParser.lengthAttr(n, "x", LengthUsage.Emu);
-                    result.cssStyle["top"] = globalXmlParser.lengthAttr(n, "y", LengthUsage.Emu);
-                    break;
+        if (xfrm) {
+            result.rotation = globalXmlParser.intAttr(xfrm, "rot", 0) / 60000;
+            for (var n of globalXmlParser.elements(xfrm)) {
+                switch (n.localName) {
+                    case "ext":
+                        result.cssStyle["width"] = globalXmlParser.lengthAttr(n, "cx", LengthUsage.Emu);
+                        result.cssStyle["height"] = globalXmlParser.lengthAttr(n, "cy", LengthUsage.Emu);
+                        break;
+                    case "off":
+                        result.cssStyle["left"] = globalXmlParser.lengthAttr(n, "x", LengthUsage.Emu);
+                        result.cssStyle["top"] = globalXmlParser.lengthAttr(n, "y", LengthUsage.Emu);
+                        break;
+                }
             }
         }
         return result;
     }
     parseTable(node) {
         var result = { type: DomType.Table, children: [] };
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "tr":
                     result.children.push(this.parseTableRow(c));
@@ -2168,24 +2216,24 @@ class DocumentParser {
                     this.parseTableProperties(c, result);
                     break;
             }
-        });
+        }
         return result;
     }
     parseTableColumns(node) {
         var result = [];
-        xmlUtil.foreach(node, n => {
+        for (const n of globalXmlParser.elements(node)) {
             switch (n.localName) {
                 case "gridCol":
                     result.push({ width: globalXmlParser.lengthAttr(n, "w") });
                     break;
             }
-        });
+        }
         return result;
     }
     parseTableProperties(elem, table) {
         table.cssStyle = {};
         table.cellStyle = {};
-        this.parseDefaultProperties(elem, table.cssStyle, table.cellStyle, c => {
+        this.parseDefaultProperties(elem, table.cssStyle, table.cellStyle, (c) => {
             switch (c.localName) {
                 case "tblStyle":
                     table.styleName = globalXmlParser.attr(c, "val");
@@ -2201,6 +2249,9 @@ class DocumentParser {
                     break;
                 case "tblStyleRowBandSize":
                     table.rowBandSize = globalXmlParser.intAttr(c, "val");
+                    break;
+                case "hidden":
+                    table.cssStyle["display"] = "none";
                     break;
                 default:
                     return false;
@@ -2224,7 +2275,7 @@ class DocumentParser {
         var bottomFromText = globalXmlParser.lengthAttr(node, "bottomFromText");
         var rightFromText = globalXmlParser.lengthAttr(node, "rightFromText");
         var leftFromText = globalXmlParser.lengthAttr(node, "leftFromText");
-        table.cssStyle["float"] = 'left';
+        table.cssStyle["float"] = "left";
         table.cssStyle["margin-bottom"] = values.addSize(table.cssStyle["margin-bottom"], bottomFromText);
         table.cssStyle["margin-left"] = values.addSize(table.cssStyle["margin-left"], leftFromText);
         table.cssStyle["margin-right"] = values.addSize(table.cssStyle["margin-right"], rightFromText);
@@ -2232,26 +2283,33 @@ class DocumentParser {
     }
     parseTableRow(node) {
         var result = { type: DomType.Row, children: [] };
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "tc":
                     result.children.push(this.parseTableCell(c));
                     break;
                 case "trPr":
+                case "tblPrEx":
                     this.parseTableRowProperties(c, result);
                     break;
             }
-        });
+        }
         return result;
     }
     parseTableRowProperties(elem, row) {
-        row.cssStyle = this.parseDefaultProperties(elem, {}, null, c => {
+        row.cssStyle = this.parseDefaultProperties(elem, {}, null, (c) => {
             switch (c.localName) {
                 case "cnfStyle":
                     row.className = values.classNameOfCnfStyle(c);
                     break;
                 case "tblHeader":
                     row.isHeader = globalXmlParser.boolAttr(c, "val");
+                    break;
+                case "gridBefore":
+                    row.gridBefore = globalXmlParser.intAttr(c, "val");
+                    break;
+                case "gridAfter":
+                    row.gridAfter = globalXmlParser.intAttr(c, "val");
                     break;
                 default:
                     return false;
@@ -2261,7 +2319,7 @@ class DocumentParser {
     }
     parseTableCell(node) {
         var result = { type: DomType.Cell, children: [] };
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "tbl":
                     result.children.push(this.parseTable(c));
@@ -2273,11 +2331,11 @@ class DocumentParser {
                     this.parseTableCellProperties(c, result);
                     break;
             }
-        });
+        }
         return result;
     }
     parseTableCellProperties(elem, cell) {
-        cell.cssStyle = this.parseDefaultProperties(elem, {}, null, c => {
+        cell.cssStyle = this.parseDefaultProperties(elem, {}, null, (c) => {
             switch (c.localName) {
                 case "gridSpan":
                     cell.span = globalXmlParser.intAttr(c, "val", null);
@@ -2297,33 +2355,35 @@ class DocumentParser {
     }
     parseTableCellVerticalText(elem, cell) {
         const directionMap = {
-            "btLr": {
+            btLr: {
                 writingMode: "vertical-rl",
-                transform: "rotate(180deg)"
+                transform: "rotate(180deg)",
             },
-            "lrTb": {
+            lrTb: {
                 writingMode: "vertical-lr",
-                transform: "none"
+                transform: "none",
             },
-            "tbRl": {
+            tbRl: {
                 writingMode: "vertical-rl",
-                transform: "none"
-            }
+                transform: "none",
+            },
         };
-        xmlUtil.foreach(elem, c => {
+        for (const c of globalXmlParser.elements(elem)) {
             if (c.localName === "textDirection") {
                 const direction = globalXmlParser.attr(c, "val");
-                const style = directionMap[direction] || { writingMode: "horizontal-tb" };
+                const style = directionMap[direction] || {
+                    writingMode: "horizontal-tb",
+                };
                 cell.cssStyle["writing-mode"] = style.writingMode;
                 cell.cssStyle["transform"] = style.transform;
             }
-        });
+        }
     }
     parseDefaultProperties(elem, style = null, childStyle = null, handler = null) {
         style = style || {};
-        xmlUtil.foreach(elem, c => {
+        for (const c of globalXmlParser.elements(elem)) {
             if (handler?.(c))
-                return;
+                continue;
             switch (c.localName) {
                 case "jc":
                     style["text-align"] = values.valueOfJc(c);
@@ -2358,19 +2418,29 @@ class DocumentParser {
                     this.parseTrHeight(c, style);
                     break;
                 case "strike":
-                    style["text-decoration"] = globalXmlParser.boolAttr(c, "val", true) ? "line-through" : "none";
+                    style["text-decoration"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "line-through"
+                        : "none";
                     break;
                 case "b":
-                    style["font-weight"] = globalXmlParser.boolAttr(c, "val", true) ? "bold" : "normal";
+                    style["font-weight"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "bold"
+                        : "normal";
                     break;
                 case "i":
-                    style["font-style"] = globalXmlParser.boolAttr(c, "val", true) ? "italic" : "normal";
+                    style["font-style"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "italic"
+                        : "normal";
                     break;
                 case "caps":
-                    style["text-transform"] = globalXmlParser.boolAttr(c, "val", true) ? "uppercase" : "none";
+                    style["text-transform"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "uppercase"
+                        : "none";
                     break;
                 case "smallCaps":
-                    style["font-variant"] = globalXmlParser.boolAttr(c, "val", true) ? "small-caps" : "none";
+                    style["font-variant"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "small-caps"
+                        : "none";
                     break;
                 case "u":
                     this.parseUnderline(c, style);
@@ -2428,10 +2498,17 @@ class DocumentParser {
                         style["overflow-wrap"] = "break-word";
                     break;
                 case "suppressAutoHyphens":
-                    style["hyphens"] = globalXmlParser.boolAttr(c, "val", true) ? "none" : "auto";
+                    style["hyphens"] = globalXmlParser.boolAttr(c, "val", true)
+                        ? "none"
+                        : "auto";
                     break;
                 case "lang":
                     style["$lang"] = globalXmlParser.attr(c, "val");
+                    break;
+                case "rtl":
+                case "bidi":
+                    if (globalXmlParser.boolAttr(c, "val", true))
+                        style["direction"] = "rtl";
                     break;
                 case "bCs":
                 case "iCs":
@@ -2456,7 +2533,7 @@ class DocumentParser {
                         console.warn(`DOCX: Unknown document element: ${elem.localName}.${c.localName}`);
                     break;
             }
-        });
+        }
         return style;
     }
     parseUnderline(node, style) {
@@ -2505,9 +2582,11 @@ class DocumentParser {
         var ascii = globalXmlParser.attr(node, "ascii");
         var asciiTheme = values.themeValue(node, "asciiTheme");
         var eastAsia = globalXmlParser.attr(node, "eastAsia");
-        var fonts = [ascii, asciiTheme, eastAsia].filter(x => x).map(x => encloseFontFamily(x));
+        var fonts = [ascii, asciiTheme, eastAsia]
+            .filter((x) => x)
+            .map((x) => encloseFontFamily(x));
         if (fonts.length > 0)
-            style["font-family"] = [...new Set(fonts)].join(', ');
+            style["font-family"] = [...new Set(fonts)].join(", ");
     }
     parseIndentation(node, style) {
         var firstLine = globalXmlParser.lengthAttr(node, "firstLine");
@@ -2521,9 +2600,9 @@ class DocumentParser {
         if (hanging)
             style["text-indent"] = `-${hanging}`;
         if (left || start)
-            style["margin-left"] = left || start;
+            style["margin-inline-start"] = left || start;
         if (right || end)
-            style["margin-right"] = right || end;
+            style["margin-inline-end"] = right || end;
     }
     parseSpacing(node, style) {
         var before = globalXmlParser.lengthAttr(node, "before");
@@ -2549,7 +2628,7 @@ class DocumentParser {
         }
     }
     parseMarginProperties(node, output) {
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "left":
                     output["padding-left"] = values.valueOfMargin(c);
@@ -2564,7 +2643,7 @@ class DocumentParser {
                     output["padding-bottom"] = values.valueOfMargin(c);
                     break;
             }
-        });
+        }
     }
     parseTrHeight(node, output) {
         switch (globalXmlParser.attr(node, "hRule")) {
@@ -2578,7 +2657,7 @@ class DocumentParser {
         }
     }
     parseBorderProperties(node, output) {
-        xmlUtil.foreach(node, c => {
+        for (const c of globalXmlParser.elements(node)) {
             switch (c.localName) {
                 case "start":
                 case "left":
@@ -2595,19 +2674,30 @@ class DocumentParser {
                     output["border-bottom"] = values.valueOfBorder(c);
                     break;
             }
-        });
-    }
-}
-const knownColors = ['black', 'blue', 'cyan', 'darkBlue', 'darkCyan', 'darkGray', 'darkGreen', 'darkMagenta', 'darkRed', 'darkYellow', 'green', 'lightGray', 'magenta', 'none', 'red', 'white', 'yellow'];
-class xmlUtil {
-    static foreach(node, cb) {
-        for (var i = 0; i < node.childNodes.length; i++) {
-            let n = node.childNodes[i];
-            if (n.nodeType == Node.ELEMENT_NODE)
-                cb(n);
         }
     }
-    static colorAttr(node, attrName, defValue = null, autoColor = 'black') {
+}
+const knownColors = [
+    "black",
+    "blue",
+    "cyan",
+    "darkBlue",
+    "darkCyan",
+    "darkGray",
+    "darkGreen",
+    "darkMagenta",
+    "darkRed",
+    "darkYellow",
+    "green",
+    "lightGray",
+    "magenta",
+    "none",
+    "red",
+    "white",
+    "yellow",
+];
+class xmlUtil {
+    static colorAttr(node, attrName, defValue = null, autoColor = "black") {
         var v = globalXmlParser.attr(node, attrName);
         if (v) {
             if (v == "auto") {
@@ -2621,9 +2711,6 @@ class xmlUtil {
         var themeColor = globalXmlParser.attr(node, "themeColor");
         return themeColor ? `var(--docx-${themeColor}-color)` : defValue;
     }
-    static sizeValue(node, type = LengthUsage.Dxa) {
-        return convertLength(node.textContent, type);
-    }
 }
 class values {
     static themeValue(c, attr) {
@@ -2633,11 +2720,13 @@ class values {
     static valueOfSize(c, attr) {
         var type = LengthUsage.Dxa;
         switch (globalXmlParser.attr(c, "type")) {
-            case "dxa": break;
+            case "dxa":
+                break;
             case "pct":
                 type = LengthUsage.Percent;
                 break;
-            case "auto": return "auto";
+            case "auto":
+                return "auto";
         }
         return globalXmlParser.lengthAttr(c, attr, type);
     }
@@ -2645,12 +2734,71 @@ class values {
         return globalXmlParser.lengthAttr(c, "w");
     }
     static valueOfBorder(c) {
-        var type = globalXmlParser.attr(c, "val");
+        var type = values.parseBorderType(globalXmlParser.attr(c, "val"));
         if (type == "nil" || type == "none")
             return "none";
         var color = xmlUtil.colorAttr(c, "color");
         var size = globalXmlParser.lengthAttr(c, "sz", LengthUsage.Border);
-        return `${size} solid ${color == "auto" ? autos.borderColor : color}`;
+        return `${size} ${type} ${color == "auto" ? autos.borderColor : color}`;
+    }
+    static parseBorderType(type) {
+        switch (type) {
+            case "single":
+                return "solid";
+            case "dashDotStroked":
+                return "solid";
+            case "dashed":
+                return "dashed";
+            case "dashSmallGap":
+                return "dashed";
+            case "dotDash":
+                return "dotted";
+            case "dotDotDash":
+                return "dotted";
+            case "dotted":
+                return "dotted";
+            case "double":
+                return "double";
+            case "doubleWave":
+                return "double";
+            case "inset":
+                return "inset";
+            case "nil":
+                return "none";
+            case "none":
+                return "none";
+            case "outset":
+                return "outset";
+            case "thick":
+                return "solid";
+            case "thickThinLargeGap":
+                return "solid";
+            case "thickThinMediumGap":
+                return "solid";
+            case "thickThinSmallGap":
+                return "solid";
+            case "thinThickLargeGap":
+                return "solid";
+            case "thinThickMediumGap":
+                return "solid";
+            case "thinThickSmallGap":
+                return "solid";
+            case "thinThickThinLargeGap":
+                return "solid";
+            case "thinThickThinMediumGap":
+                return "solid";
+            case "thinThickThinSmallGap":
+                return "solid";
+            case "threeDEmboss":
+                return "solid";
+            case "threeDEngrave":
+                return "solid";
+            case "triple":
+                return "double";
+            case "wave":
+                return "solid";
+        }
+        return "solid";
     }
     static valueOfTblLayout(c) {
         var type = globalXmlParser.attr(c, "val");
@@ -2659,29 +2807,44 @@ class values {
     static classNameOfCnfStyle(c) {
         const val = globalXmlParser.attr(c, "val");
         const classes = [
-            'first-row', 'last-row', 'first-col', 'last-col',
-            'odd-col', 'even-col', 'odd-row', 'even-row',
-            'ne-cell', 'nw-cell', 'se-cell', 'sw-cell'
+            "first-row",
+            "last-row",
+            "first-col",
+            "last-col",
+            "odd-col",
+            "even-col",
+            "odd-row",
+            "even-row",
+            "ne-cell",
+            "nw-cell",
+            "se-cell",
+            "sw-cell",
         ];
-        return classes.filter((_, i) => val[i] == '1').join(' ');
+        return classes.filter((_, i) => val[i] == "1").join(" ");
     }
     static valueOfJc(c) {
         var type = globalXmlParser.attr(c, "val");
         switch (type) {
             case "start":
-            case "left": return "left";
-            case "center": return "center";
+            case "left":
+                return "left";
+            case "center":
+                return "center";
             case "end":
-            case "right": return "right";
-            case "both": return "justify";
+            case "right":
+                return "right";
+            case "both":
+                return "justify";
         }
         return type;
     }
     static valueOfVertAlign(c, asTagName = false) {
         var type = globalXmlParser.attr(c, "val");
         switch (type) {
-            case "subscript": return "sub";
-            case "superscript": return asTagName ? "sup" : "super";
+            case "subscript":
+                return "sub";
+            case "superscript":
+                return asTagName ? "sup" : "super";
         }
         return asTagName ? null : type;
     }
@@ -2689,10 +2852,14 @@ class values {
         var type = globalXmlParser.attr(c, "val");
         switch (type) {
             case "auto":
-            case "baseline": return "baseline";
-            case "top": return "top";
-            case "center": return "middle";
-            case "bottom": return "bottom";
+            case "baseline":
+                return "baseline";
+            case "top":
+                return "top";
+            case "center":
+                return "middle";
+            case "bottom":
+                return "bottom";
         }
         return type;
     }
@@ -2706,17 +2873,17 @@ class values {
     static classNameOftblLook(c) {
         const val = globalXmlParser.hexAttr(c, "val", 0);
         let className = "";
-        if (globalXmlParser.boolAttr(c, "firstRow") || (val & 0x0020))
+        if (globalXmlParser.boolAttr(c, "firstRow") || val & 0x0020)
             className += " first-row";
-        if (globalXmlParser.boolAttr(c, "lastRow") || (val & 0x0040))
+        if (globalXmlParser.boolAttr(c, "lastRow") || val & 0x0040)
             className += " last-row";
-        if (globalXmlParser.boolAttr(c, "firstColumn") || (val & 0x0080))
+        if (globalXmlParser.boolAttr(c, "firstColumn") || val & 0x0080)
             className += " first-col";
-        if (globalXmlParser.boolAttr(c, "lastColumn") || (val & 0x0100))
+        if (globalXmlParser.boolAttr(c, "lastColumn") || val & 0x0100)
             className += " last-col";
-        if (globalXmlParser.boolAttr(c, "noHBand") || (val & 0x0200))
+        if (globalXmlParser.boolAttr(c, "noHBand") || val & 0x0200)
             className += " no-hband";
-        if (globalXmlParser.boolAttr(c, "noVBand") || (val & 0x0400))
+        if (globalXmlParser.boolAttr(c, "noVBand") || val & 0x0400)
             className += " no-vband";
         return className.trim();
     }
@@ -3453,7 +3620,7 @@ section.${c}>footer { z-index: 1; }
             return null;
         const rng = new Range();
         this.commentHighlight?.add(rng);
-        const result = this.htmlDocument.createComment(`start of comment #${commentStart.id}`);
+        const result = this.createComment(`start of comment #${commentStart.id}`);
         this.later(() => rng.setStart(result, 0));
         this.commentMap[commentStart.id] = rng;
         return result;
@@ -3462,7 +3629,7 @@ section.${c}>footer { z-index: 1; }
         if (!this.options.renderComments)
             return null;
         const rng = this.commentMap[commentEnd.id];
-        const result = this.htmlDocument.createComment(`end of comment #${commentEnd.id}`);
+        const result = this.createComment(`end of comment #${commentEnd.id}`);
         this.later(() => rng?.setEnd(result, 0));
         return result;
     }
@@ -3476,7 +3643,7 @@ section.${c}>footer { z-index: 1; }
         const commentRefEl = this.createElement("span", { className: `${this.className}-comment-ref` }, ['💬']);
         const commentsContainerEl = this.createElement("div", { className: `${this.className}-comment-popover` });
         this.renderCommentContent(comment, commentsContainerEl);
-        frg.appendChild(this.htmlDocument.createComment(`comment #${comment.id} by ${comment.author} on ${comment.date}`));
+        frg.appendChild(this.createComment(`comment #${comment.id} by ${comment.author} on ${comment.date}`));
         frg.appendChild(commentRefEl);
         frg.appendChild(commentsContainerEl);
         return frg;
@@ -3505,7 +3672,16 @@ section.${c}>footer { z-index: 1; }
     }
     renderImage(elem) {
         let result = this.createElement("img");
+        let transform = elem.cssStyle?.transform;
         this.renderStyleValues(elem.cssStyle, result);
+        if (elem.srcRect && elem.srcRect.some(x => x != 0)) {
+            var [left, top, right, bottom] = elem.srcRect;
+            transform = `scale(${1 / (1 - left - right)}, ${1 / (1 - top - bottom)})`;
+            result.style['clip-path'] = `rect(${(100 * top).toFixed(2)}% ${(100 * (1 - right)).toFixed(2)}% ${(100 * (1 - bottom)).toFixed(2)}% ${(100 * left).toFixed(2)}%)`;
+        }
+        if (elem.rotation)
+            transform = `rotate(${elem.rotation}deg) ${transform ?? ''}`;
+        result.style.transform = transform?.trim();
         if (this.document) {
             this.tasks.push(this.document.loadDocumentImage(elem.src, this.currentPart).then(x => {
                 result.src = x;
@@ -3517,7 +3693,7 @@ section.${c}>footer { z-index: 1; }
         return this.htmlDocument.createTextNode(elem.text);
     }
     renderDeletedText(elem) {
-        return this.options.renderEndnotes ? this.htmlDocument.createTextNode(elem.text) : null;
+        return this.options.renderChanges ? this.renderText(elem) : null;
     }
     renderBreak(elem) {
         if (elem.break == "textWrapping") {
@@ -3610,11 +3786,21 @@ section.${c}>footer { z-index: 1; }
         return result;
     }
     renderTableRow(elem) {
-        let result = this.renderContainer(elem, "tr");
+        let result = this.createElement("tr");
         this.currentCellPosition.col = 0;
+        if (elem.gridBefore)
+            result.appendChild(this.renderTableCellPlaceholder(elem.gridBefore));
         this.renderClass(elem, result);
+        this.renderElements(elem.children, result);
         this.renderStyleValues(elem.cssStyle, result);
+        if (elem.gridAfter)
+            result.appendChild(this.renderTableCellPlaceholder(elem.gridAfter));
         this.currentCellPosition.row++;
+        return result;
+    }
+    renderTableCellPlaceholder(colSpan) {
+        const result = this.createElement("td", { colSpan });
+        result.style['border'] = 'none';
         return result;
     }
     renderTableCell(elem) {

@@ -128,6 +128,8 @@ export interface WmlTable extends OpenXmlElement {
 
 export interface WmlTableRow extends OpenXmlElement {
 	isHeader?: boolean;
+    gridBefore?: number;
+    gridAfter?: number;
 }
 
 export interface WmlTableCell extends OpenXmlElement {
@@ -137,6 +139,8 @@ export interface WmlTableCell extends OpenXmlElement {
 
 export interface IDomImage extends OpenXmlElement {
     src: string;
+    srcRect: number[];
+    rotation: number;
 }
 
 export interface WmlTableColumn {

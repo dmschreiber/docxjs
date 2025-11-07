@@ -3,7 +3,8 @@ import {
 	DomType, WmlTable, IDomNumbering,
 	WmlHyperlink, IDomImage, OpenXmlElement, WmlTableColumn, WmlTableCell, WmlText, WmlSymbol, WmlBreak, WmlNoteReference,
 	WmlSmartTag,
-	WmlAltChunk
+	WmlAltChunk,
+	WmlTableRow
 } from './document/dom';
 import { CommonProperties } from './document/common';
 import { Options } from './docx-preview';
@@ -969,7 +970,7 @@ section.${c}>footer { z-index: 1; }
 		const rng = new Range();
 		this.commentHighlight?.add(rng);
 
-		const result = this.htmlDocument.createComment(`start of comment #${commentStart.id}`);
+		const result = this.createComment(`start of comment #${commentStart.id}`);
 		this.later(() => rng.setStart(result, 0));
 		this.commentMap[commentStart.id] = rng;
 
@@ -981,7 +982,7 @@ section.${c}>footer { z-index: 1; }
 			return null;
 
 		const rng = this.commentMap[commentEnd.id];
-		const result = this.htmlDocument.createComment(`end of comment #${commentEnd.id}`);
+		const result = this.createComment(`end of comment #${commentEnd.id}`);
 		this.later(() => rng?.setEnd(result, 0));
 
 		return result;
@@ -1002,7 +1003,7 @@ section.${c}>footer { z-index: 1; }
 
 		this.renderCommentContent(comment, commentsContainerEl);
 
-		frg.appendChild(this.htmlDocument.createComment(`comment #${comment.id} by ${comment.author} on ${comment.date}`));
+		frg.appendChild(this.createComment(`comment #${comment.id} by ${comment.author} on ${comment.date}`));
 		frg.appendChild(commentRefEl);
 		frg.appendChild(commentsContainerEl);
 
@@ -1043,8 +1044,20 @@ section.${c}>footer { z-index: 1; }
 
 	renderImage(elem: IDomImage) {
 		let result = this.createElement("img");
+		let transform = elem.cssStyle?.transform;
 
 		this.renderStyleValues(elem.cssStyle, result);
+
+		if (elem.srcRect && elem.srcRect.some(x => x != 0)) {
+			var [left, top, right, bottom] = elem.srcRect;
+			transform = `scale(${1 / (1 - left - right)}, ${1 / (1 - top - bottom)})`;
+			result.style['clip-path'] = `rect(${(100 * top).toFixed(2)}% ${(100 * (1 - right)).toFixed(2)}% ${(100 * (1 - bottom)).toFixed(2)}% ${(100 * left).toFixed(2)}%)`;
+		}
+
+		if (elem.rotation)
+			transform = `rotate(${elem.rotation}deg) ${transform ?? ''}`;
+
+		result.style.transform = transform?.trim();
 
 		if (this.document) {
 			this.tasks.push(this.document.loadDocumentImage(elem.src, this.currentPart).then(x => {
@@ -1060,7 +1073,7 @@ section.${c}>footer { z-index: 1; }
 	}
 
 	renderDeletedText(elem: WmlText) {
-		return this.options.renderEndnotes ? this.htmlDocument.createTextNode(elem.text) : null;
+		return this.options.renderChanges ? this.renderText(elem) : null;
 	}
 
 	renderBreak(elem: WmlBreak) {
@@ -1184,16 +1197,29 @@ section.${c}>footer { z-index: 1; }
 		return result;
 	}
 
-	renderTableRow(elem: OpenXmlElement) {
-		let result = this.renderContainer(elem, "tr");
+	renderTableRow(elem: WmlTableRow) {
+		let result = this.createElement("tr");
 
 		this.currentCellPosition.col = 0;
 
+		if (elem.gridBefore)
+			result.appendChild(this.renderTableCellPlaceholder(elem.gridBefore));
+
 		this.renderClass(elem, result);
+		this.renderElements(elem.children, result);
 		this.renderStyleValues(elem.cssStyle, result);
+
+		if (elem.gridAfter)
+			result.appendChild(this.renderTableCellPlaceholder(elem.gridAfter));
 
 		this.currentCellPosition.row++;
 
+		return result;
+	}
+
+	renderTableCellPlaceholder(colSpan: number) {
+		const result = this.createElement("td", { colSpan })
+		result.style['border'] = 'none';
 		return result;
 	}
 
